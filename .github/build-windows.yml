@@ -1,0 +1,34 @@
+name: Build Windows EXE
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check frontend files
+        run: |
+          if (-not (Test-Path "src/index.html")) { Write-Error "src/index.html missing"; exit 1 }
+          (Get-Content src/index.html -TotalCount 1) | Write-Host
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: dtolnay/rust-toolchain@stable
+      - run: rustc --version
+      - name: Install dependencies
+        run: npm ci
+      - name: Build
+        run: npm run tauri build
+      - name: Show bundled web assets
+        run: |
+          $bundleRoot = Get-ChildItem -Recurse src-tauri/target/release/bundle | Where-Object { $_.PSIsContainer -and $_.Name -match 'mytest' } | Select-Object -First 1
+          Write-Host "Bundle root: $($bundleRoot.FullName)"
+          Get-ChildItem -Recurse $bundleRoot.FullName | Select-Object FullName | Out-String -Width 2000
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mytest-windows
+          path: |
+            src-tauri/target/release/bundle/**/*.msi
