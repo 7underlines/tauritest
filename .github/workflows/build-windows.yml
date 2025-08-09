@@ -1,4 +1,4 @@
-name: Build Windows EXE
+name: Build Windows
 
 on:
   workflow_dispatch:
@@ -16,16 +16,10 @@ jobs:
         with:
           node-version: 24
       - uses: dtolnay/rust-toolchain@stable
-      - run: rustc --version
       - name: Install dependencies
         run: npm ci
       - name: Build
         run: npm run tauri build
-      - name: Show bundled web assets
-        run: |
-          $bundleRoot = Get-ChildItem -Recurse src-tauri/target/release/bundle | Where-Object { $_.PSIsContainer -and $_.Name -match 'mytest' } | Select-Object -First 1
-          Write-Host "Bundle root: $($bundleRoot.FullName)"
-          Get-ChildItem -Recurse $bundleRoot.FullName | Select-Object FullName | Out-String -Width 2000
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
